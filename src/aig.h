@@ -15,6 +15,8 @@ typedef enum {
     OUTPUT_NODE ///< output node code "2"
 } AigNodeType;
 
+static const char* AigNodeTypeString[] = {"AND", "INPUT", "OUTPUT"};
+
 /**
  * \brief Aig general class.
  * AIG node, can represent any of the 3 node types.
@@ -82,6 +84,7 @@ class InputNode:public AigNode {
          * \return void asdasdasdad
          *
          */
+        int getFanOutSize();
         void connectTo(AigNode*, int, int);
         AigNode* getFanIn(int);
         bool getInvertedFanIn(int);
@@ -92,9 +95,10 @@ class InputNode:public AigNode {
 };
 
 class OutputNode:public AigNode {
-    AigNode* in0;
-    bool in0Inverted;
-    string name;
+    private:
+        AigNode* in0;
+        bool in0Inverted;
+        string name;
 
     public:
         OutputNode();

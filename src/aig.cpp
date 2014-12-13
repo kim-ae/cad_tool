@@ -207,12 +207,46 @@ void Aig::setName(string newName){
 }
 
 void Aig::showAIG(){
+    string indentation = "    ";
     for(AigNode* node : this->getNodes()){
-        cout << node->getId() << ' ';
-        if(node->getType() == INPUT_NODE){
-            InputNode* input = (InputNode*) node;
-
+        switch(node->getType()){
+            case INPUT_NODE:{
+                InputNode* input = (InputNode*) node;
+                vector<AigNode*> fanOuts = input->getFanOut();
+                vector<bool> invertedFanOuts = input->getInvertedFanOut();
+                int i = 0;
+                cout << "\033[31mInput Node " << input->getName() << "(" << input->getId() <<") \033[0m\n";
+                cout << " -> Conect to: \n";
+                for(AigNode* fanOutNode : fanOuts){
+                    cout << indentation << "Node " << fanOutNode->getId() << (invertedFanOuts[i] ? " is" : " inst") << " inverted of type " << AigNodeTypeString[fanOutNode->getType()] <<"\n";
+                    i++;
+                }
+                break;
+            }
+            case AND_NODE:{
+                AndNode* andNode = (AndNode*) node;
+                cout << "\033[32mAnd Node " << andNode->getId() << "\033[0m\n";
+                cout << "-> Inputs:\n";
+                cout << indentation << andNode->getFanIn(0)->getId() << (andNode->getInvertedFanIn(0) ? " is" : " inst") << " inverted of type " << AigNodeTypeString[andNode->getFanIn(0)->getType()] <<"\n";
+                cout << indentation << andNode->getFanIn(1)->getId() << (andNode->getInvertedFanIn(1) ? " is" : " inst") << " inverted of type " << AigNodeTypeString[andNode->getFanIn(1)->getType()] <<"\n";
+                cout << "-> Connect to:\n";
+                vector<AigNode*> fanOuts = andNode->getFanOut();
+                vector<bool> invertedFanOuts = andNode->getInvertedFanOut();
+                int i = 0;
+                for(AigNode* fanOutNode : fanOuts){
+                    cout << indentation << "Node " << fanOutNode->getId() << (invertedFanOuts[i] ? " is" : " inst") << " inverted of type " << AigNodeTypeString[fanOutNode->getType()] <<"\n";
+                    i++;
+                }
+                break;
+            }
+            case OUTPUT_NODE:{
+                OutputNode* output = (OutputNode*) node;
+                cout << "\033[33mOutput Node " << output->getName()<<" ("<<output->getId() << ")\033[0m\n";
+                cout << "-> Inputs:\n";
+                cout << indentation << output->getFanIn(0)->getId() << (output->getInvertedFanIn(0) ? " is" : " inst") << " inverted of type " << AigNodeTypeString[output->getFanIn(0)->getType()] <<"\n";
+            }
         }
+
     }
     // cout << '\n';
     // for(AigNode* currentOutput : this->getOutputs()){
@@ -221,4 +255,3 @@ void Aig::showAIG(){
     // }
     cout << '\n';
 }
-

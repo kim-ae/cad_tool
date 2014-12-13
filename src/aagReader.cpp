@@ -60,7 +60,7 @@ Aig* AAGReader::readFile()
 
     debug << s << "\nThe file header is ok!\n\n";
 
-    AigNode** nodes = new AigNode*[nNodes+1];
+    AigNode** nodes = new AigNode*[nNodes+2];
     OutputNode* outputs = new OutputNode[nOutputs];
     InputNode* inputs = new InputNode[nInputs];
     AndNode * ands = new AndNode[nAnds];
@@ -87,7 +87,7 @@ Aig* AAGReader::readFile()
         debug << "read the output" << i << " from the file " <<outputs[i].getName() << "\n";
         debug << "   create out" << i << " and add it to an output list and the all nodes list\n";
     }
-
+            cout << nodesCounter << endl;
     //connecting ands
     debug << "\n";
     for (int i = 0; i < nAnds; i++, nodesCounter++) {
@@ -101,17 +101,30 @@ Aig* AAGReader::readFile()
         int in0 = atoi(word.c_str());
         line >> word;
         int in1 = atoi(word.c_str());
-        AigNode* node1 = findById(in0, nodes, nNodes+1);
-        AigNode* node2 = findById(in1, nodes, nNodes+1);
+        AigNode* node1 = findById(in0, nodes, nNodes+2);
+        AigNode* node2 = findById(in1, nodes, nNodes+2);
         ands[i].setFanIn(0,node1 ,this->invertion(in0));
         ands[i].setFanIn(1,node2 ,this->invertion(in1));
         ands[i].setId(id);
         node1->connectTo(&ands[i], 0, this->invertion(in0));
         node2->connectTo(&ands[i], 1, this->invertion(in1));
         nodes[nodesCounter] = &ands[i];
-        debug << "read the and" << i << " output and inputs\n";
-        debug << "   connect the and" << i << " and set the inversion of this pins\n";
+        cout << "read the and" << i << " output and inputs\n";
+        cout << "   connect the and" << i << " and set the inversion of this pins\n";
     }
+
+    vector<AigNode*> outputVector = findByType(OUTPUT_NODE, nodes, nNodes+2);
+    for(AigNode* outputNode : outputVector){
+        int inId = outputNode->getId();
+        bool isInverted = invertion(inId);
+        if(isInverted){
+            inId -= 1;
+        }
+        AigNode* fanIn = findById(inId, nodes, nNodes+2);
+        outputNode->setFanIn(0, fanIn, isInverted);
+        fanIn->connectTo(outputNode, 0, isInverted);
+    }
+
     debug << "\n";
     string aigName;
     while(source)
@@ -168,4 +181,14 @@ AigNode* AAGReader::findById(int id, AigNode** nodes , int aigSize){
     debug << "Err finding id " << id << "\n";
     cout << "Err finding id " << id << "\n";
     exit(-1);
+}
+
+vector<AigNode*> AAGReader::findByType(AigNodeType type, AigNode** nodes, int aigSize){
+    vector<AigNode*> typeNodes;
+    for(int i =0; i<aigSize;i++){
+        if(nodes[i]->getType() == type){
+            typeNodes.push_back(nodes[i]);
+        }
+    }
+    return typeNodes;
 }
