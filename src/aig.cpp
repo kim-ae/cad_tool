@@ -246,12 +246,5 @@ void Aig::showAIG(){
                 cout << indentation << output->getFanIn(0)->getId() << (output->getInvertedFanIn(0) ? " is" : " inst") << " inverted of type " << AigNodeTypeString[output->getFanIn(0)->getType()] <<"\n";
             }
         }
-
     }
-    // cout << '\n';
-    // for(AigNode* currentOutput : this->getOutputs()){
-    //     OutputNode* currentOutputCasting = (OutputNode*) currentOutput;
-    //     cout << currentOutputCasting->getName() << " ";
-    // }
-    cout << '\n';
 }

@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -c -Wall
-NOUSEDFLAG=-Wunused-variable
+NOUSEDFLAG=-c -Wunused-variable
 STD = -std=c++11
 
 all: cad
@@ -10,10 +10,10 @@ cad: aig.o aagReader.o main.o
 	rm *.o
 
 aig.o:
-	${CC} ${STD} ${CFLAGS} ${NOUSEDFLAG} src/aig.cpp
+	${CC} ${STD} ${NOUSEDFLAG} src/aig.cpp
 
 aagReader.o:
-	${CC} ${STD} ${CFLAGS} ${NOUSEDFLAG} src/aagReader.cpp
+	${CC} ${STD} ${NOUSEDFLAG} src/aagReader.cpp
 
 main.o:
-	${CC} ${STD} ${CFLAGS} ${NOUSEDFLAG} src/main.cpp
+	${CC} ${STD} ${NOUSEDFLAG} src/main.cpp

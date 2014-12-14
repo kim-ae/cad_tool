@@ -1,3 +1,5 @@
+#ifndef AIG_H
+#define AIG_H
 #include <iostream>
 #include <string>
 #include <map>
@@ -141,3 +143,4 @@ class Aig {
 };
 
 
+#endif

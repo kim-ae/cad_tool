@@ -28,25 +28,25 @@ Aig* AAGReader::readFile()
     string s = this->buf;
     int nodesCounter = 0;
     line.str(s);
-    line >> word;
+    line >> this->word;
 
-    if(strcmp("aag",word.c_str())!=0)
+    if(strcmp("aag",this->word.c_str())!=0)
     {
         cout << "the file is not an AAG file!";
         return NULL;
     }
 
     int nNodes, nInputs, nFFs, nOutputs, nAnds;
-    line >> word;
-    nNodes = atoi(word.c_str());
-    line >> word;
-    nInputs = atoi(word.c_str());
-    line >> word;
-    nFFs = atoi(word.c_str());
-    line >> word;
-    nOutputs = atoi(word.c_str());
-    line >> word;
-    nAnds = atoi(word.c_str());
+    line >> this->word;
+    nNodes = atoi(this->word.c_str());
+    line >> this->word;
+    nInputs = atoi(this->word.c_str());
+    line >> this->word;
+    nFFs = atoi(this->word.c_str());
+    line >> this->word;
+    nOutputs = atoi(this->word.c_str());
+    line >> this->word;
+    nAnds = atoi(this->word.c_str());
 
     if (nNodes != nInputs + nFFs + nAnds) {
         cout << "Wrong file header";
@@ -57,14 +57,13 @@ Aig* AAGReader::readFile()
         cout << "FF not supported yet";
         return NULL;
     }
-
+    nNodes+=nOutputs;
     debug << s << "\nThe file header is ok!\n\n";
 
-    AigNode** nodes = new AigNode*[nNodes+2];
+    AigNode** nodes = new AigNode*[nNodes];
     OutputNode* outputs = new OutputNode[nOutputs];
     InputNode* inputs = new InputNode[nInputs];
     AndNode * ands = new AndNode[nAnds];
-    stringstream convertoToString;
     //treating inputs
     for (int i = 0; i < nInputs; i++, nodesCounter++) {
         source.getline(this->buf, 250, '\n');
@@ -87,7 +86,6 @@ Aig* AAGReader::readFile()
         debug << "read the output" << i << " from the file " <<outputs[i].getName() << "\n";
         debug << "   create out" << i << " and add it to an output list and the all nodes list\n";
     }
-            cout << nodesCounter << endl;
     //connecting ands
     debug << "\n";
     for (int i = 0; i < nAnds; i++, nodesCounter++) {
@@ -95,38 +93,37 @@ Aig* AAGReader::readFile()
         istringstream line;
         string s = this->buf;
         line.str(s);
-        line >> word;
-        int id = atoi(word.c_str());
-        line >> word;
-        int in0 = atoi(word.c_str());
-        line >> word;
-        int in1 = atoi(word.c_str());
-        AigNode* node1 = findById(in0, nodes, nNodes+2);
-        AigNode* node2 = findById(in1, nodes, nNodes+2);
+        line >> this->word;
+        int id = atoi(this->word.c_str());
+        line >> this->word;
+        int in0 = atoi(this->word.c_str());
+        line >> this->word;
+        int in1 = atoi(this->word.c_str());
+        AigNode* node1 = findById(in0, nodes, nNodes);
+        AigNode* node2 = findById(in1, nodes, nNodes);
         ands[i].setFanIn(0,node1 ,this->invertion(in0));
         ands[i].setFanIn(1,node2 ,this->invertion(in1));
         ands[i].setId(id);
         node1->connectTo(&ands[i], 0, this->invertion(in0));
         node2->connectTo(&ands[i], 1, this->invertion(in1));
         nodes[nodesCounter] = &ands[i];
-        cout << "read the and" << i << " output and inputs\n";
-        cout << "   connect the and" << i << " and set the inversion of this pins\n";
+        debug << "read the and" << i << " output and inputs\n";
+        debug << "   connect the and" << i << " and set the inversion of this pins\n";
     }
 
-    vector<AigNode*> outputVector = findByType(OUTPUT_NODE, nodes, nNodes+2);
+    vector<AigNode*> outputVector = findByType(OUTPUT_NODE, nodes, nNodes);
     for(AigNode* outputNode : outputVector){
         int inId = outputNode->getId();
         bool isInverted = invertion(inId);
         if(isInverted){
             inId -= 1;
         }
-        AigNode* fanIn = findById(inId, nodes, nNodes+2);
+        AigNode* fanIn = findById(inId, nodes, nNodes);
         outputNode->setFanIn(0, fanIn, isInverted);
         fanIn->connectTo(outputNode, 0, isInverted);
     }
 
     debug << "\n";
-    string aigName;
     while(source)
     {
         source.getline(buf, 250, '\n');
@@ -134,15 +131,19 @@ Aig* AAGReader::readFile()
         istringstream line;
         line.seekg(0);
         line.str(s);
-        line >> word;
-        if(strcmp("c",word.substr(0).c_str())==0){
+        line >> this->word;
+        if(strcmp("c",this->word.substr(0,1).c_str())==0){
             debug << "the comments began. Ignore the file from here!\n";
             break;
-        } else if(strcmp(word.substr(0).c_str(),"i")==0){
-
-        } else if(strcmp(word.substr(0).c_str(),"o")==0){
-
-        } else if(strcmp(word.substr(0).c_str(),"l")==0){
+        } else if(strcmp(this->word.substr(0,1).c_str(),"i")==0){
+            InputNode* input = (InputNode*) findByName(this->word, nodes, nNodes);
+            line >> this->word;
+            input->setName(this->word);
+        } else if(strcmp(this->word.substr(0,1).c_str(),"o")==0){
+            OutputNode* output = (OutputNode*) findByName(this->word, nodes, nNodes);
+            line >> this->word;
+            output->setName(this->word);
+        } else if(strcmp(this->word.substr(0,1).c_str(),"l")==0){
 
         }
     }
@@ -150,7 +151,7 @@ Aig* AAGReader::readFile()
     debug << "\ncreate the AIG and add all nodes\n";
     debug << "return the AIG";
 
-    for(int i =0; i<nNodes + nOutputs;i++) {
+    for(int i =0; i<nNodes;i++) {
     	debug << "\n";
         aig->insertNode(nodes[i]);
         switch(nodes[i]->getType()){
@@ -158,6 +159,7 @@ Aig* AAGReader::readFile()
                 break;
             case OUTPUT_NODE: aig->insertOutputNode(nodes[i]);
                 break;
+            case AND_NODE: break;
         }
     }
     return aig;
@@ -191,4 +193,30 @@ vector<AigNode*> AAGReader::findByType(AigNodeType type, AigNode** nodes, int ai
         }
     }
     return typeNodes;
+}
+
+AigNode* AAGReader::findByName(string name, AigNode** nodes, int aigSize){
+    for(int i=0; i< aigSize; i++){
+        switch(nodes[i]->getType()){
+            case INPUT_NODE:{
+                InputNode* input = (InputNode*)nodes[i];
+                if(input->getName() == name){
+                    return nodes[i];
+                }
+                break;
+            }
+
+            case OUTPUT_NODE:{
+                OutputNode* output = (OutputNode*)nodes[i];
+                if(output->getName() == name){
+                    return nodes[i];
+                }
+                break;
+            }
+            case AND_NODE: break;
+        }
+    }
+    debug << "Err finding name " << name << "\n";
+    cout << "Err finding name " << name << "\n";
+    exit(-1);
 }

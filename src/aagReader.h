@@ -20,6 +20,7 @@ class AAGReader
         bool isInverted(int number);
         AigNode* findById(int id, AigNode** nodes, int aigSize);
         vector<AigNode*> findByType(AigNodeType type, AigNode** nodes, int aigSize);
+        AigNode* findByName(string name, AigNode** nodes, int aigSize);
 
     public:
         int invertion(int number);
