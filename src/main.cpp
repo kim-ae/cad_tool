@@ -27,7 +27,8 @@ int main(int argc, char** argv)
     AAGReader reader(argv[1]);
     Aig* aig = reader.readFile();
     cout << aig->getName()<<endl;
-    bool continue_ = true;
+    bool continue_ = false;
+    aig->AIGStatistics();
     string choice;
     while(continue_){
         cout<<"Choose one: ";

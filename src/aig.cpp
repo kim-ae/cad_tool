@@ -257,21 +257,45 @@ void Aig::AIGStatistics(){
     cout<< "#Inputs: " << nInputs << endl;
     cout << "#Outputs: " << nOutputs << endl;
     cout << "#Ands: " << nNodes - nInputs - nOutputs << endl;
-    int depth = 0;
+    cout << "Caminho crítico por entrada: " << endl;
+    list<int> initialList;
+    int criticalPathSize = 0;
     for(AigNode* input : inputs){
-        depth = max(depth, this->maxDepth(input, 0));
+        InputNode* inputDowncast = (InputNode*) input;
+        cout << "  " <<inputDowncast->getName()<<endl;
+        list<int> criticalPathList = this->maxDepth(input, initialList);
+        criticalPathSize = max((int)criticalPathList.size(), criticalPathSize);
+        this->printCriticalPath(criticalPathList);
     }
-    cout << "Caminho crítico: " << depth << endl;
+    cout << "Caminho crítico: " << criticalPathSize - 2 << endl;
 }
 
-int Aig::maxDepth(AigNode* node, int currentDepth){
+void Aig::printCriticalPath(list<int> list){
+    int i = 0;
+    for(int id : list){
+        if(i==0){
+            cout<<"    InputNode("<<id<<") ";
+        }else if(i <list.size()-1){
+            cout<<"AndNode("<<id<<") ";
+        }else{
+            cout<<"OutputNode("<<id<<")"<<endl;
+        }
+        i++;
+    }
+}
+
+list<int> Aig::maxDepth(AigNode* node, list<int> depth){
     if(node->getType() == OUTPUT_NODE){
-        currentDepth -=1;
-        return currentDepth;
+        depth.push_back(node->getId());
+        return depth;
     }
-    int depth = 0;
+    list<int> newDepth;
+    depth.push_back(node->getId());
     for(AigNode* child : node->getFanOut()){
-        depth = max(depth, this->maxDepth(child, currentDepth+1));
+        list<int> r = this->maxDepth(child,depth);
+        if(newDepth.size() < r.size()){
+            newDepth = r;
+        }
     }
-    return depth;
+    return newDepth;
 }

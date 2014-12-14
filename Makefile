@@ -5,9 +5,11 @@ STD = -std=c++11
 
 all: cad
 
-cad: aig.o aagReader.o main.o
-	${CC} aig.o aagReader.o main.o -o cad_tool
+cad: path.o aig.o aagReader.o main.o
+	${CC} path.o aig.o aagReader.o main.o -o cad_tool
 	rm *.o
+path.o:
+	${CC} ${STD} ${NOUSEDFLAG} src/path.cpp
 
 aig.o:
 	${CC} ${STD} ${NOUSEDFLAG} src/aig.cpp
@@ -17,3 +19,4 @@ aagReader.o:
 
 main.o:
 	${CC} ${STD} ${NOUSEDFLAG} src/main.cpp
+

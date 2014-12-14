@@ -8,6 +8,7 @@
 #include <sstream>
 #include <set>
 #include <list>
+#include "path.h"
 
 using namespace std;
 /// Ebnumerator used to represents each of possible nodes in AIG.
@@ -128,6 +129,9 @@ class Aig {
         list<AigNode*> nodes; //deve conter todos os nodos (and, entradas e saídas)
         list<AigNode*> inputs; //deve conter todas as entradas
         list<AigNode*> outputs; //deve conter todas as saidas
+        list<int> maxDepth(AigNode* node, list<int> depth);
+        Path* maxDepth(AigNode* node, Path currentDepth);
+        void printCriticalPath(list<int>);
 
     public:
         Aig();
@@ -141,7 +145,6 @@ class Aig {
         void setName(string);
         void showAIG();
         void AIGStatistics();
-        int maxDepth(AigNode* node, int currentDepth);
 };
 
 
