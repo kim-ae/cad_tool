@@ -13,14 +13,22 @@ using namespace std;
 class AAGReader
 {
     private:
+        int nodesCounter;
+        int nNodes;
+        int nInputs;
+        int nFFs;
+        int nOutputs;
+        int nAnds;
         ifstream source;
         ofstream debug;
+        string aigName;
         string word;
         char buf[250];
         bool isInverted(int number);
         AigNode* findById(int id, AigNode** nodes, int aigSize);
         vector<AigNode*> findByType(AigNodeType type, AigNode** nodes, int aigSize);
         AigNode* findByName(string name, AigNode** nodes, int aigSize);
+        void connectAnds(AigNode** nodes);
 
     public:
         int invertion(int number);

@@ -140,6 +140,8 @@ class Aig {
         void insertOutputNode(AigNode*);
         void setName(string);
         void showAIG();
+        void AIGStatistics();
+        int maxDepth(AigNode* node, int currentDepth);
 };
 
 

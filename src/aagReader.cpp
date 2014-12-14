@@ -9,7 +9,12 @@
  */
 AAGReader::AAGReader(string sourcePath)
 {
+    this->nodesCounter = 0;
     this->source.open(sourcePath.c_str());
+    int pointIndex = sourcePath.find(".") - sourcePath.find("/") - 1;
+    int barIndex = sourcePath.find("/") + 1;
+    this->aigName = sourcePath.substr(barIndex,pointIndex);
+
     if(!this->source.is_open()){
         cout << "Can't find the file " << sourcePath << '\n';
         cout << "Please check the path."<< '\n';
@@ -21,12 +26,11 @@ AAGReader::AAGReader(string sourcePath)
 Aig* AAGReader::readFile()
 {
     Aig *aig = new Aig();
-    aig->setName("C17");
+    aig->setName(this->aigName);
     //treating header
     source.getline(this->buf, 250, '\n');
     istringstream line;
     string s = this->buf;
-    int nodesCounter = 0;
     line.str(s);
     line >> this->word;
 
@@ -36,17 +40,16 @@ Aig* AAGReader::readFile()
         return NULL;
     }
 
-    int nNodes, nInputs, nFFs, nOutputs, nAnds;
     line >> this->word;
-    nNodes = atoi(this->word.c_str());
+    this->nNodes = atoi(this->word.c_str());
     line >> this->word;
-    nInputs = atoi(this->word.c_str());
+    this->nInputs = atoi(this->word.c_str());
     line >> this->word;
     nFFs = atoi(this->word.c_str());
     line >> this->word;
-    nOutputs = atoi(this->word.c_str());
+    this->nOutputs = atoi(this->word.c_str());
     line >> this->word;
-    nAnds = atoi(this->word.c_str());
+    this->nAnds = atoi(this->word.c_str());
 
     if (nNodes != nInputs + nFFs + nAnds) {
         cout << "Wrong file header";
@@ -63,7 +66,6 @@ Aig* AAGReader::readFile()
     AigNode** nodes = new AigNode*[nNodes];
     OutputNode* outputs = new OutputNode[nOutputs];
     InputNode* inputs = new InputNode[nInputs];
-    AndNode * ands = new AndNode[nAnds];
     //treating inputs
     for (int i = 0; i < nInputs; i++, nodesCounter++) {
         source.getline(this->buf, 250, '\n');
@@ -88,28 +90,7 @@ Aig* AAGReader::readFile()
     }
     //connecting ands
     debug << "\n";
-    for (int i = 0; i < nAnds; i++, nodesCounter++) {
-        source.getline(this->buf, 250, '\n');
-        istringstream line;
-        string s = this->buf;
-        line.str(s);
-        line >> this->word;
-        int id = atoi(this->word.c_str());
-        line >> this->word;
-        int in0 = atoi(this->word.c_str());
-        line >> this->word;
-        int in1 = atoi(this->word.c_str());
-        AigNode* node1 = findById(in0, nodes, nNodes);
-        AigNode* node2 = findById(in1, nodes, nNodes);
-        ands[i].setFanIn(0,node1 ,this->invertion(in0));
-        ands[i].setFanIn(1,node2 ,this->invertion(in1));
-        ands[i].setId(id);
-        node1->connectTo(&ands[i], 0, this->invertion(in0));
-        node2->connectTo(&ands[i], 1, this->invertion(in1));
-        nodes[nodesCounter] = &ands[i];
-        debug << "read the and" << i << " output and inputs\n";
-        debug << "   connect the and" << i << " and set the inversion of this pins\n";
-    }
+    connectAnds(nodes);
 
     vector<AigNode*> outputVector = findByType(OUTPUT_NODE, nodes, nNodes);
     for(AigNode* outputNode : outputVector){
@@ -169,6 +150,32 @@ int AAGReader::invertion(int number){
     return number % 2 == 0 ? 0 : 1;
 }
 
+void AAGReader::connectAnds(AigNode** nodes){
+    AndNode* ands = new AndNode[this->nAnds];
+    for (int i = 0; i < this->nAnds; i++, this->nodesCounter++) {
+        this->source.getline(this->buf, 250, '\n');
+        istringstream line;
+        string s = this->buf;
+        line.str(s);
+        line >> this->word;
+        int id = atoi(this->word.c_str());
+        line >> this->word;
+        int in0 = atoi(this->word.c_str());
+        line >> this->word;
+        int in1 = atoi(this->word.c_str());
+        AigNode* node1 = findById(in0, nodes, nNodes);
+        AigNode* node2 = findById(in1, nodes, nNodes);
+        ands[i].setFanIn(0,node1 ,this->invertion(in0));
+        ands[i].setFanIn(1,node2 ,this->invertion(in1));
+        ands[i].setId(id);
+        node1->connectTo(&ands[i], 0, this->invertion(in0));
+        node2->connectTo(&ands[i], 1, this->invertion(in1));
+        nodes[this->nodesCounter] = &ands[i];
+        debug << "read the and" << i << " output and inputs\n";
+        debug << "   connect the and" << i << " and set the inversion of this pins\n";
+    }
+}
+
 AigNode* AAGReader::findById(int id, AigNode** nodes , int aigSize){
 
     if(this->invertion(id)){
@@ -176,7 +183,7 @@ AigNode* AAGReader::findById(int id, AigNode** nodes , int aigSize){
     }
 
     for(int i = 0; i < aigSize ; i++){
-        if(nodes[i]->getId() == id){
+        if(nodes[i]->getId() == id && nodes[i]->getType() != OUTPUT_NODE){
             return nodes[i];
         }
     }

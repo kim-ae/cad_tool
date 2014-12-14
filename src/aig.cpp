@@ -248,3 +248,30 @@ void Aig::showAIG(){
         }
     }
 }
+
+void Aig::AIGStatistics(){
+    list<AigNode*> inputs = this->getInputs();
+    int nInputs = inputs.size();
+    int nOutputs = this->getOutputs().size();
+    int nNodes = this->getNodes().size();
+    cout<< "#Inputs: " << nInputs << endl;
+    cout << "#Outputs: " << nOutputs << endl;
+    cout << "#Ands: " << nNodes - nInputs - nOutputs << endl;
+    int depth = 0;
+    for(AigNode* input : inputs){
+        depth = max(depth, this->maxDepth(input, 0));
+    }
+    cout << "Caminho crítico: " << depth << endl;
+}
+
+int Aig::maxDepth(AigNode* node, int currentDepth){
+    if(node->getType() == OUTPUT_NODE){
+        currentDepth -=1;
+        return currentDepth;
+    }
+    int depth = 0;
+    for(AigNode* child : node->getFanOut()){
+        depth = max(depth, this->maxDepth(child, currentDepth+1));
+    }
+    return depth;
+}
