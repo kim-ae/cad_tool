@@ -35,6 +35,14 @@ AigNode* AndNode::getFanIn(int index){
     }
 }
 
+bool AndNode::isNaturalInverted(){
+    return this->naturalInverted;
+}
+
+void AndNode::setNaturalInverted(bool naturalInverted){
+    this->naturalInverted = naturalInverted;
+}
+
 bool AndNode::getInvertedFanIn(int index){
     if(index == 0) return this->in0Inverted;
     else if(index == 1) return this->in1Inverted;
@@ -174,25 +182,13 @@ Aig::Aig(){
     this->idCounter = 2;
 }
 
-AigNode* Aig::createXor(AigNode* input1, AigNode* input2){
-    AndNode* and0 = new AndNode();
-    AndNode* and1 = new AndNode();
-    AndNode* and2 = new AndNode();
-
-    and0->setId(this->getIdCounter());
-    and1->setId(this->getIdCounter());
-    and2->setId(this->getIdCounter());
-
-    and0->connectTo(and2, 0, true);
-    and1->connectTo(and2, 1, true);
-    input1->connectTo(and0, 0, false);
-    input2->connectTo(and0, 1, false);
-    input1->connectTo(and1, 0, true);
-    input2->connectTo(and1, 1, true);
-    this->insertNode(and0);
-    this->insertNode(and1);
-    this->insertNode(and2);
-    return and2;
+AigNode* Aig::createAnd(AigNode* input1, AigNode* input2, bool invertion0, bool invertion1){
+    AndNode* andNode = new AndNode();
+    andNode->setId(this->getIdCounter());
+    input1->connectTo(andNode, 0, invertion0);
+    input2->connectTo(andNode, 1, invertion1);
+    this->insertNode(andNode);
+    return andNode;
 }
 
 void Aig::createInputs(int quantity){
@@ -205,12 +201,18 @@ void Aig::createInputs(int quantity){
     }
 }
 
-void Aig::createOutputs(AigNode* node, bool inversion){
+AigNode* Aig::createOutputs(AigNode* node, bool invertion){
     OutputNode* output = new OutputNode();
     output->setName("o" + to_string(this->getOutputs().size()));
-    node->connectTo(output, 0, inversion);
+    node->connectTo(output, 0, invertion);
     this->insertOutputNode(output);
     this->insertNode(output);
+    if(invertion){
+        output->setId(node->getId()+1);
+    }else{
+        output->setId(node->getId());
+    }
+    return output;
 }
 
 string Aig::getName(){
@@ -218,7 +220,9 @@ string Aig::getName(){
 }
 
 int Aig::getIdCounter(){
-    return this->idCounter++;
+    int returnId = this->idCounter;
+    this->idCounter += 2;
+    return returnId;
 }
 
 list<AigNode*> Aig::getInputs(){
@@ -277,7 +281,14 @@ void Aig::showAIG(){
                 vector<bool> invertedFanOuts = andNode->getInvertedFanOut();
                 int i = 0;
                 for(AigNode* fanOutNode : fanOuts){
-                    cout << indentation << "Node " << fanOutNode->getId() << (invertedFanOuts[i] ? " is" : " inst") << " inverted of type " << AigNodeTypeString[fanOutNode->getType()] <<"\n";
+                    string nodeName;
+                    if(fanOutNode->getType() == OUTPUT_NODE){
+                        OutputNode* fanOutNodeCast = (OutputNode*)fanOutNode;
+                        nodeName = fanOutNodeCast->getName();
+                    }else{
+                        nodeName = to_string(fanOutNode->getId());
+                    }
+                    cout << indentation << "Node " << nodeName << (invertedFanOuts[i] ? " is" : " inst") << " inverted of type " << AigNodeTypeString[fanOutNode->getType()] <<"\n";
                     i++;
                 }
                 break;

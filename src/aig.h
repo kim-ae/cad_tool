@@ -10,22 +10,18 @@
 #include <list>
 
 using namespace std;
-/// Ebnumerator used to represents each of possible nodes in AIG.
+
 typedef enum {
-    AND_NODE, ///< and node code "0"
-    INPUT_NODE, ///< input node code "1"
-    OUTPUT_NODE ///< output node code "2"
+    AND_NODE,
+    INPUT_NODE,
+    OUTPUT_NODE
 } AigNodeType;
 
 static const char* AigNodeTypeString[] = {"AND", "INPUT", "OUTPUT"};
 
-/**
- * \brief Aig general class.
- * AIG node, can represent any of the 3 node types.
- */
 class AigNode {
     private:
-        int ID; /**< Identification to the node, according to the input file.*/
+        int ID;
     public:
         virtual AigNodeType getType() = 0;
         virtual void connectTo(AigNode*, int, bool) = 0;
@@ -38,10 +34,6 @@ class AigNode {
         int getId();
 };
 
-/**
-* \brief And node class.
-* And specific class.
-*/
 class AndNode:public AigNode {
     private:
         AigNode* in0;
@@ -49,8 +41,9 @@ class AndNode:public AigNode {
         bool in0Inverted;
         bool in1Inverted;
         vector<AigNode*> fanOut;
+        bool naturalInverted;
         vector<bool> invertedFanout;
-        //precisa de referência para as saídas do nodo (uma lista, talvez)?
+
 
     public:
         AndNode();
@@ -60,13 +53,12 @@ class AndNode:public AigNode {
         bool getInvertedFanIn(int);
         vector<AigNode*> getFanOut();
         vector<bool> getInvertedFanOut();
+        bool isNaturalInverted();
+        void setNaturalInverted(bool);
         void setFanIn(int, AigNode*, bool);
-        //void imprime(ostream& saida);
+
 };
 
-
-/** \brief Blablabla
- */
 class InputNode:public AigNode {
     private:
         string name;
@@ -103,12 +95,7 @@ class OutputNode:public AigNode {
         bool getInvertedFanIn(int);
         vector<AigNode*> getFanOut();
         vector<bool> getInvertedFanOut();
-        /**
-        * set`s the connection from a node to this node.
-        * \param
-        */
         void setFanIn(int, AigNode*, bool);
-        //void imprime(ostream& saida);
 };
 
 
@@ -117,9 +104,9 @@ class Aig {
     private:
         string name;
         int idCounter;
-        list<AigNode*> nodes; //deve conter todos os nodos (and, entradas e saídas)
-        list<AigNode*> inputs; //deve conter todas as entradas
-        list<AigNode*> outputs; //deve conter todas as saidas
+        list<AigNode*> nodes;
+        list<AigNode*> inputs;
+        list<AigNode*> outputs;
         list<int> maxDepth(AigNode* node, list<int> depth);
         void printCriticalPath(list<int>);
 
@@ -136,9 +123,10 @@ class Aig {
         void showAIG();
         void AIGStatistics();
         void createInputs(int quantity);
-        void createOutputs(AigNode* node, bool inversion);
+        AigNode* createOutputs(AigNode*, bool);
         int getIdCounter();
-        AigNode* createXor(AigNode* input1, AigNode* input2);
+        AigNode* createAnd(AigNode* input1, AigNode* Input2, bool invertion0, bool invertion1);
+
 };
 
 
