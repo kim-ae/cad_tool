@@ -29,9 +29,9 @@ class AAGReader
         vector<AigNode*> findByType(AigNodeType type, AigNode** nodes, int aigSize);
         AigNode* findByName(string name, AigNode** nodes, int aigSize);
         void connectAnds(AigNode** nodes);
+        bool invertion(int number);
 
     public:
-        int invertion(int number);
         AAGReader(string sourcePath);
         Aig* readFile();
 };

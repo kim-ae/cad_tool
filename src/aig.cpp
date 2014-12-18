@@ -19,7 +19,7 @@ AigNodeType AndNode::getType(){
     return AND_NODE;
 }
 
-void AndNode::connectTo(AigNode * dest, int pin, int isInverted){
+void AndNode::connectTo(AigNode * dest, int pin, bool isInverted){
     this->fanOut.push_back(dest);
     this->invertedFanout.push_back(isInverted);
 
@@ -81,7 +81,7 @@ AigNodeType InputNode::getType(){
     return INPUT_NODE;
 }
 
-void InputNode::connectTo(AigNode * dest, int pin, int isInverted){
+void InputNode::connectTo(AigNode * dest, int pin, bool isInverted){
     this->fanOut.push_back(dest);
     this->invertedFanout.push_back(isInverted);
 
@@ -126,7 +126,7 @@ AigNodeType OutputNode::getType(){
     return OUTPUT_NODE;
 }
 
-void OutputNode::connectTo(AigNode*, int, int){
+void OutputNode::connectTo(AigNode* AigNode, int pin , bool inversion){
     cout << "Wrong type of node! OutputNode can not connectTo";
 }
 
@@ -171,11 +171,54 @@ void OutputNode::setFanIn(int index, AigNode * node, bool isInverted){
 //------------------AIG------------------
 
 Aig::Aig(){
+    this->idCounter = 2;
+}
 
+AigNode* Aig::createXor(AigNode* input1, AigNode* input2){
+    AndNode* and0 = new AndNode();
+    AndNode* and1 = new AndNode();
+    AndNode* and2 = new AndNode();
+
+    and0->setId(this->getIdCounter());
+    and1->setId(this->getIdCounter());
+    and2->setId(this->getIdCounter());
+
+    and0->connectTo(and2, 0, true);
+    and1->connectTo(and2, 1, true);
+    input1->connectTo(and0, 0, false);
+    input2->connectTo(and0, 1, false);
+    input1->connectTo(and1, 0, true);
+    input2->connectTo(and1, 1, true);
+    this->insertNode(and0);
+    this->insertNode(and1);
+    this->insertNode(and2);
+    return and2;
+}
+
+void Aig::createInputs(int quantity){
+    for(int i = 0; i<quantity;i++){
+        InputNode* input = new InputNode();
+        input->setId(this->getIdCounter());
+        input->setName("i"+to_string(i));
+        this->insertNode(input);
+        this->insertInputNode(input);
+    }
+}
+
+void Aig::createOutputs(AigNode* node, bool inversion){
+    OutputNode* output = new OutputNode();
+    output->setName("o" + to_string(this->getOutputs().size()));
+    node->connectTo(output, 0, inversion);
+    this->insertOutputNode(output);
+    this->insertNode(output);
 }
 
 string Aig::getName(){
     return this->name;
+}
+
+int Aig::getIdCounter(){
+    return this->idCounter++;
 }
 
 list<AigNode*> Aig::getInputs(){

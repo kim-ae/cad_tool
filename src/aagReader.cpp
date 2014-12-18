@@ -146,8 +146,8 @@ Aig* AAGReader::readFile()
     return aig;
 }
 
-int AAGReader::invertion(int number){
-    return number % 2 == 0 ? 0 : 1;
+bool AAGReader::invertion(int number){
+    return number % 2 == 0 ? false : true;
 }
 
 void AAGReader::connectAnds(AigNode** nodes){
